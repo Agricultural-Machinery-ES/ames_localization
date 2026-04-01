@@ -6,7 +6,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_share = get_package_share_directory("robot_localization")
-    config_file = os.path.join(pkg_share, "config", "navsat_transform_sim.yaml")
+    config_file = os.path.join(pkg_share, "params", "navsat_transform_sim.yaml")
 
     # 1. NavSat Transform Node: 将 GPS 经纬度转换为 Map 坐标系下的米制坐标
     navsat_node = Node(

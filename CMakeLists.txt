@@ -349,7 +349,6 @@ install(DIRECTORY
   params
   launch
   DESTINATION share/${PROJECT_NAME}
-  USE_SOURCE_PERMISSIONS
 )
 
 ament_export_include_directories(include)
