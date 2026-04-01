@@ -1,0 +1,55 @@
+navsat_transform_node:
+  ros__parameters:
+    # 是否发布“地理投影坐标系 <-> 世界坐标系”的变换
+    # 这个不是 map->odom 主TF，而是给GPS转换过程用的辅助TF
+    broadcast_cartesian_transform: true
+
+    # 如果为 true，则 cartesian/utm 作为父坐标系
+    # 如果为 false，则 world_frame 作为父坐标系
+    broadcast_cartesian_transform_as_parent_frame: false
+
+    # 指定固定基准点（datum）
+    # [纬度, 经度, 高度]
+    # 有了它，GPS 经纬度会相对这个参考点转换成平面坐标
+    datum:
+      - 31.62132975   # latitude
+      - 119.1805795   # longitude
+      - 0.0
+
+    # 启动后等待若干秒再开始处理，避免一开始 TF/传感器还没准备好
+    delay: 2.0
+
+    # 节点输出频率
+    frequency: 30.0
+
+    # 磁偏角（弧度）
+    # 如果 IMU 的 yaw 是相对磁北，需要填磁偏角修正到真北
+    # 如果 IMU 已经是地图系/东北天系，通常填 0
+    magnetic_declination_radians: 0.0
+
+    # 是否发布融合后的 GPS（把滤波后的平面坐标再转回经纬度）
+    publish_filtered_gps: false
+
+    # 查询 TF 的等待时间
+    transform_timeout: 1.0
+
+    # false: 使用全局投影坐标（通常类似 UTM/cartesian）
+    # true : 使用局部笛卡尔坐标（local cartesian / ENU）
+    use_local_cartesian: false
+
+    # false: 航向角从 IMU 来
+    # true : 航向角从 odometry 来
+    use_odometry_yaw: true
+
+    use_sim_time: false
+
+    # true: 必须等 datum 就绪后才开始工作
+    wait_for_datum: true
+
+    # yaw 额外补偿项（弧度）
+    # 如果 IMU 朝向定义和 ENU/地图系有固定偏差，可以在这里修
+    yaw_offset: 0.0
+
+    # 是否把高度强行置 0
+    # 对 2D 地面机器人通常建议 true
+    zero_altitude: true

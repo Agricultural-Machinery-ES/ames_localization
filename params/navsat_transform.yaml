@@ -1,50 +1,82 @@
 navsat_transform_node:
-    ros__parameters:
-# Frequency of the main run loop
-        frequency: 30.0
+  ros__parameters:
+    # --- 坐标变换配置 ---
+    # 是否发布 GPS 投影系(UTM/Cartesian)与世界系(Map)之间的 TF
+    broadcast_cartesian_transform: true
+    # false 表示 Map 是父级（Map -> UTM）；true 表示 UTM 是父级（UTM -> Map）
+    broadcast_cartesian_transform_as_parent_frame: false
+    
+    # --- 地图原点 (Datum) ---
+    # 预设地图零点经纬度 [纬度, 经度, 海拔]
+    datum: [31.62132975, 119.1805795, 0.0]
+    # 必须等待收到 datum 后才开始处理 GPS 数据
+    wait_for_datum: true
 
-# Delay time, in seconds, before we calculate the transform from the UTM frame to your world frame. This is especially
-# important if you have use_odometry_yaw set to true. Defaults to 0.
-        delay: 3.0
+    # --- 算法逻辑控制 ---
+    # 使用局部笛卡尔坐标系(ENU)而非全球 UTM 坐标
+    use_local_cartesian: false
+    # 优先使用里程计提供的偏航角(Yaw)进行经纬度对齐，而非直接使用 IMU
+    use_odometry_yaw: true
+    # 地面机器人强制将高度设为 0，防止 Z 轴漂移
+    zero_altitude: true
 
-# PLEASE READ: Like all nodes in robot_localization, this node assumes that your IMU data is reported in the ENU frame.
-# Many IMUs report data in the NED frame, so you'll want to verify that your data is in the correct frame before using
-# it. 
+    # --- 修正参数 ---
+    # 磁偏角补偿：若 IMU 未补偿磁北与真北差异则需填写（弧度）
+    magnetic_declination_radians: 0.0
+    # 坐标系偏置：修正 IMU 安装角或坐标系定义的额外偏差
+    yaw_offset: 0.0
 
-# If your IMU does not account for magnetic declination, enter the value for your location here. If you don't know it,
-# see http://www.ngdc.noaa.gov/geomag-web/ (make sure to convert the value to radians). This parameter is mandatory.
-        magnetic_declination_radians: 0.0
+    # --- 输出与频率 ---
+    frequency: 30.0
+    delay: 3.0
+    transform_timeout: 0.0
+    # 发布经过滤波修正后的经纬度话题 (/gps/filtered)
+    publish_filtered_gps: true
+    use_sim_time: false
 
-# Your IMU's yaw, once the magentic_declination_radians value is added to it, should report 0 when facing east. If it
-# doesn't, enter the offset here. Defaults to 0.
-        yaw_offset: 0.0
+global_ekf_node:
+  ros__parameters:
+    # --- 核心设置 ---
+    frequency: 10.0
+    # 2D 模式：强制忽略 Z, Roll, Pitch 及其速度/加速度，适合地面移动
+    two_d_mode: true
+    publish_acceleration: false
+    # 强制将机器人位姿推算至当前系统时间，确保 TF 变换实时同步，防止导航因数据延迟报错
+    predict_to_current_time: true
 
-# If this is true, the altitude is set to 0 in the output odometry message. Defaults to false.
-        zero_altitude: false
+    # --- TF 树结构 ---
+    # 全局 EKF：负责维护 map -> odom 的变换
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: map
 
-# If this is true, the transform world_frame->utm transform is broadcast for use by other nodes. Defaults to false.
-        broadcast_utm_transform: false
+    # --- 传感器输入配置说明 ---
+    # 矩阵格式：[x, y, z, roll, pitch, yaw, vx, vy, vz, v_roll, v_pitch, v_yaw, ax, ay, az]
 
-# If this is true, the utm->world_frame transform will be published instead of the world_frame->utm transform. 
-# Note that broadcast_utm_transform still has to be enabled. Defaults to false.
-        broadcast_utm_transform_as_parent_frame: false
+    # [输入 0]：局部里程计 (编码器/视觉)
+    # 逻辑：仅使用其“横向/纵向速度”和“角速度”，不使用其易漂移的绝对位姿
+    odom0: /odom
+    odom0_config: [false, false, false, # Position
+                   false, false, false, # Orientation
+                   true,  false, false, # Linear Velocity (vx)
+                   false, false, true,  # Angular Velocity (vyaw)
+                   false, false, false] # Acceleration
 
-# If this is true, all received odometry data is converted back to a lat/lon and published as a NavSatFix message as
-# /gps/filtered. Defaults to false.
-        publish_filtered_gps: false
+    # [输入 1]：IMU 数据
+    # 逻辑：提供绝对偏航角(Yaw)和角速度(v_yaw)以修正航向
+    imu0: /imu/data
+    imu0_config: [false, false, false,
+                  false, false, true,  # Orientation (yaw)
+                  false, false, false,
+                  false, false, true,  # Angular Velocity (vyaw)
+                  false, false, false]
 
-# If this is true, the node ignores the IMU data and gets its heading from the odometry source (typically the
-# /odometry/filtered topic coming from one of robot_localization's state estimation nodes). BE CAREFUL when using this!
-# The yaw value in your odometry source *must* be world-referenced, e.g., you cannot use your odometry source for yaw
-# if your yaw data is based purely on integrated velocities. Defaults to false.
-        use_odometry_yaw: false
-
-# If true, will retrieve the datum from the 'datum' parameter below, if available. If no 'datum' parameter exists,
-# navsat_transform_node will wait until the user calls the 'datum' service with the SetDatum service message.
-        wait_for_datum: false
-
-# Instead of using the first GPS location and IMU-based heading for the local-frame origin, users can specify the
-# origin (datum) using this parameter. The fields in the parameter represent latitude and longitude in decimal degrees,
-# and heading in radians. As navsat_transform_node assumes an ENU standard, a 0 heading corresponds to east.
-        datum: [55.944904, -3.186693, 0.0]
-
+    # [输入 2]：GPS 转换后的里程计 (由 navsat_transform_node 输出)
+    # 逻辑：提供全局绝对位置 (x, y)，防止累积误差
+    odom1: /odometry/gps
+    odom1_config: [true,  true,  false, # Position (x, y)
+                   false, false, false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
