@@ -12,8 +12,8 @@ navsat_transform_node:
     # [纬度, 经度, 高度]
     # 有了它，GPS 经纬度会相对这个参考点转换成平面坐标
     datum:
-      - 31.62132975   # latitude
-      - 119.1805795   # longitude
+      - 32.0448545816   # latitude
+      - 118.874397795   # longitude
       - 0.0
 
     # 启动后等待若干秒再开始处理，避免一开始 TF/传感器还没准备好
