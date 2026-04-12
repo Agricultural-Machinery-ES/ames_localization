@@ -10,7 +10,7 @@ navsat_transform_node:
       - 119.1805795   # 经度 longitude
       - 0.0           # 海拔 altitude
     delay: 3.0        # 节点启动后等待传感器数据的延迟时间
-    frequency: 30.0
+    frequency: 15.0
     magnetic_declination_radians: 0.0  # 磁偏角，若 IMU 已在外部补偿则设为 0
     publish_filtered_gps: true        # 发布经过滤波后的经纬度数据 (sensor_msgs/NavSatFix)
     transform_timeout: 0.0
@@ -22,7 +22,7 @@ navsat_transform_node:
 
 global_ekf_node:
   ros__parameters:
-    frequency: 10.0
+    frequency: 15.0
     two_d_mode: true                  # 仅处理 X, Y, Yaw
     publish_acceleration: false
     predict_to_current_time: false

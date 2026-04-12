@@ -17,10 +17,10 @@ navsat_transform_node:
       - 0.0
 
     # 启动后等待若干秒再开始处理，避免一开始 TF/传感器还没准备好
-    delay: 2.0
+    delay: 0.5
 
     # 节点输出频率
-    frequency: 30.0
+    frequency: 20.0
 
     # 磁偏角（弧度）
     # 如果 IMU 的 yaw 是相对磁北，需要填磁偏角修正到真北
