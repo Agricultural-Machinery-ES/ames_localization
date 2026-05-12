@@ -16,9 +16,9 @@ def generate_launch_description():
         output="screen",
         parameters=[config_file],
         remappings=[
-            ("imu/data", "/imu/data"),
+            ("imu", "/imu/data"),
             ("gps/fix", "/gps/fix"),
-            ("odometry/filtered", "/odom"),  # 订阅局部EKF
+            ("odometry/filtered", "/odom"),  # 订阅仿真里程计
             ("odometry/gps", "/odometry/gps"),  # 输出转换后的位姿
         ],
     )

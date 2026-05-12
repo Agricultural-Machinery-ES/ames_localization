@@ -9,12 +9,12 @@ navsat_transform_node:
     broadcast_cartesian_transform_as_parent_frame: false
 
     # 指定固定基准点（datum）
-    # [纬度, 经度, 高度]
+    # [latitude, longitude, yaw]；第三项是地图相对 ENU/UTM 的 yaw，不是海拔。
     # 有了它，GPS 经纬度会相对这个参考点转换成平面坐标
     datum:
       - 32.0448545816   # latitude
       - 118.874397795   # longitude
-      - 0.0
+      - 0.0             # yaw [rad]
 
     # 启动后等待若干秒再开始处理，避免一开始 TF/传感器还没准备好
     delay: 0.5
