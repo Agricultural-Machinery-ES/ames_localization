@@ -14,6 +14,7 @@
 
 import os
 from ament_index_python.packages import get_package_share_directory
+from ames_utils.config_injector import with_global_config
 from launch import LaunchDescription
 from launch_ros.actions import Node
 
@@ -28,7 +29,7 @@ def generate_launch_description():
         executable="navsat_transform_node",
         name="navsat_transform_node",
         output="screen",
-        parameters=[config_file],
+        parameters=with_global_config([config_file]),
         remappings=[
             ("imu", "/imu/data"),
             ("gps/fix", "/gps/fix"),
@@ -43,7 +44,7 @@ def generate_launch_description():
         executable="ekf_node",
         name="global_ekf_node",
         output="screen",
-        parameters=[config_file],
+        parameters=with_global_config([config_file]),
     )
 
     return LaunchDescription([navsat_node, global_ekf_node])

@@ -43,6 +43,7 @@
   <exec_depend>rosidl_default_runtime</exec_depend>
   
   <exec_depend>rclcpp</exec_depend>
+  <exec_depend>ames_utils</exec_depend>
   <exec_depend>rmw_implementation</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
