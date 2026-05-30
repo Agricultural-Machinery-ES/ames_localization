@@ -44,6 +44,12 @@ def generate_launch_description():
         arguments=["0", "0", "0", "0", "0", "0", "base_link", "imu_link"],
     )
 
+    static_base_link_navsat = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        arguments=["0", "0", "0", "0", "0", "0", "base_link", "navsat_link"],
+    )
+
     # 2. Global EKF Node: 融合 GPS、IMU 和局部里程计，发布 map -> odom
     global_ekf_node = Node(
         package="robot_localization",
@@ -53,4 +59,9 @@ def generate_launch_description():
         parameters=with_global_config([config_file]),
     )
 
-    return LaunchDescription([navsat_node, static_base_link_imu, global_ekf_node])
+    return LaunchDescription([
+        navsat_node,
+        static_base_link_imu,
+        static_base_link_navsat,
+        global_ekf_node,
+    ])
