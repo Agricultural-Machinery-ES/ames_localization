@@ -9,11 +9,11 @@ navsat_transform_node:
     # 保持 false 时，通常更符合以 world/map 为主坐标系的配置习惯。
     broadcast_cartesian_transform_as_parent_frame: false
 
-    # 固定地图基准点 datum，格式为 [latitude, longitude, yaw]。
+    # 手动 datum 基准点，格式为 [latitude, longitude, yaw]。
     # - latitude: 纬度，单位是度
     # - longitude: 经度，单位是度
     # - yaw: 地图相对 ENU/UTM 的初始朝向，单位是弧度，不是高度
-    # 该值决定地图原点和全局参考的锚定方式。
+    # 仅在启用手动 datum 模式时使用；当前自动基准模式下不会采用这组值。
     datum:
       # 基准点纬度。
       - 31.62132975   # latitude
@@ -47,13 +47,14 @@ navsat_transform_node:
     use_local_cartesian: false
 
     # 是否使用里程计 yaw 参与姿态推算。
-    # 这里开启后，姿态会结合里程计信息进行转换，而不是完全依赖固定朝向。
-    # 在固定 datum 模式下，初始地图朝向仍主要由 datum 的 yaw 决定。
+    # 开启后，节点会把里程计中的航向作为姿态来源之一参与转换。
+    # 若同时启用手动 datum，地图初始朝向仍以 datum 的 yaw 为基准。
     use_odometry_yaw: true
 
-    # 是否等待 datum 被显式设置后再开始工作。
-    # 开启后，节点不会在未确定基准点时提前输出不稳定的全局结果。
-    wait_for_datum: true
+    # 是否启用手动 datum 模式。
+    # 关闭后，节点会在运行时根据首批 GPS、姿态和里程计数据自动建立全局基准。
+    # 这种模式下，每次启动的全局锚点可能随首帧状态而变化。
+    wait_for_datum: false
 
     # 额外 yaw 偏置，单位弧度。
     # 用于修正传感器安装角度、坐标系定义差异或整车基准偏差。
