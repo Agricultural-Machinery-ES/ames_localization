@@ -1,50 +1,17 @@
 navsat_transform_node:
   ros__parameters:
-    # 是否发布“地理投影坐标系 <-> 世界坐标系”的变换
-    # 这个不是 map->odom 主TF，而是给GPS转换过程用的辅助TF
-    broadcast_cartesian_transform: true
-
-    # 如果为 true，则 cartesian/utm 作为父坐标系，形成 utm -> world_frame 的辅助 TF。
-    # 对“map 是全球固定地理系下的本地工作坐标”这类语义，更容易直接观察地理锚点是否稳定。
-    broadcast_cartesian_transform_as_parent_frame: true
-
-    # 启动后等待若干秒再开始处理，避免一开始 TF/传感器还没准备好
-    delay: 0.5
-
-    # 节点输出频率
     frequency: 20.0
-
-    # 磁偏角（弧度）
-    # 如果 IMU 的 yaw 是相对磁北，需要填磁偏角修正到真北
-    # 如果 IMU 已经是地图系/东北天系，通常填 0
+    delay: 0.5
     magnetic_declination_radians: 0.0
-
-    # 是否发布融合后的 GPS（把滤波后的平面坐标再转回经纬度）
-    publish_filtered_gps: true
-
-    # 查询 TF 的等待时间
-    transform_timeout: 1.0
-
-    # false: 使用全局投影坐标（通常类似 UTM/cartesian）
-    # true : 使用局部笛卡尔坐标（local cartesian / ENU）
-    use_local_cartesian: false
-
-    # false: 航向角从 IMU 来
-    # true : 航向角从 odometry 来
-    use_odometry_yaw: true
-
-    use_sim_time: false
-
-    # true: 必须等 datum 就绪后才开始工作
-    wait_for_datum: false
-
-    # yaw 额外补偿项（弧度）
-    # 如果 IMU 朝向定义和 ENU/地图系有固定偏差，可以在这里修
     yaw_offset: 0.0
-
-    # 是否把高度强行置 0
-    # 对 2D 地面机器人通常建议 true
     zero_altitude: true
+    publish_filtered_gps: false
+    use_odometry_yaw: true
+    wait_for_datum: false
+    use_local_cartesian: false
+    broadcast_cartesian_transform: true
+    broadcast_cartesian_transform_as_parent_frame: true
+    transform_timeout: 0.5
 
 local_ekf_node:
   ros__parameters:
@@ -56,84 +23,18 @@ local_ekf_node:
     predict_to_current_time: false
     print_diagnostics: true
 
-    map_frame: map
+    map_frame: odom
     odom_frame: odom
     base_link_frame: base_link
     world_frame: odom
     transform_timeout: 0.5
 
     odom0: /odom
-    # 本地 EKF 需要融合 odom 的平面位置，才能把连续积分出来的 x/y 协方差压住。
-    # 同时关闭 vy，避免把差速底盘消息里默认的侧向 0 速度当成高置信观测。
     odom0_config: [true,  true,  false,
-                   false, false, false,
+                   false, false, true,
                    true,  false, false,
                    false, false, true,
                    false, false, false]
     odom0_differential: false
     odom0_relative: false
     odom0_queue_size: 10
-
-    imu0: /imu/data
-    # 普通底盘 2D 模式下，IMU 主要用于提供航向与偏航角速度，
-    # 不直接用线加速度去驱动速度状态，避免在全局 EKF 中估出假的侧向速度。
-    imu0_config: [false, false, false,
-                  false, false, true,
-                  false, false, false,
-                  false, false, true,
-                  false, false, false]
-    imu0_differential: false
-    imu0_relative: false
-    imu0_remove_gravitational_acceleration: true
-    imu0_queue_size: 10
-
-global_ekf_node:
-  ros__parameters:
-    frequency: 20.0
-    sensor_timeout: 0.5
-    two_d_mode: true
-    publish_tf: true
-    publish_acceleration: false
-    predict_to_current_time: false
-    print_diagnostics: true
-
-    map_frame: map
-    odom_frame: odom
-    base_link_frame: base_link
-    world_frame: map
-    transform_timeout: 0.5
-
-    # 只把局部 EKF 的连续运动信息继续传给全局 EKF，
-    # 同时显式接入 vy=0 约束，告诉全局层这是个不能侧滑的地面底盘。
-    # 全局绝对位置仍然由 odometry/gps 提供，避免把两层职责混在一起。
-    odom0: /odometry/local
-    odom0_config: [false, false, false,
-                   false, false, false,
-                   true,  true,  false,
-                   false, false, true,
-                   false, false, false]
-    odom0_differential: false
-    odom0_relative: false
-    odom0_queue_size: 10
-
-    imu0: /imu/data
-    # 全局层只保留 yaw / vyaw，避免 IMU 线加速度在没有侧向约束时把 vy 估坏。
-    imu0_config: [false, false, false,
-                  false, false, true,
-                  false, false, false,
-                  false, false, true,
-                  false, false, false]
-    imu0_differential: false
-    imu0_relative: false
-    imu0_remove_gravitational_acceleration: true
-    imu0_queue_size: 10
-
-    odom1: /odometry/gps
-    odom1_config: [true,  true,  false,
-                   false, false, false,
-                   false, false, false,
-                   false, false, false,
-                   false, false, false]
-    odom1_differential: false
-    odom1_relative: false
-    odom1_queue_size: 10

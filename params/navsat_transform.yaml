@@ -1,55 +1,20 @@
 navsat_transform_node:
   ros__parameters:
-    # 是否发布“笛卡尔坐标系 <-> 世界坐标系”的辅助 TF。
-    # 这不是 map -> odom 主 TF，而是给经纬度投影转换用的辅助锚点。
-    broadcast_cartesian_transform: true
-
-    # 保持 world/map 为主参考系，不把 cartesian/utm 放到主链路父级。
-    broadcast_cartesian_transform_as_parent_frame: false
-
-    # 手动 datum 基准点，仅在 wait_for_datum=true 时才会启用。
-    datum:
-      - 31.62132975
-      - 119.1805795
-      - 0.0
-
-    # 启动后稍等一会再开始处理，给 TF 和传感器预热。
-    delay: 0.5
-
-    # 节点处理频率。
     frequency: 15.0
-
-    # 磁偏角补偿，按现场真北/磁北差值填写。
+    delay: 0.5
     magnetic_declination_radians: 0.0
-
-    # 输出滤波后的经纬度结果。
-    publish_filtered_gps: true
-
-    # 查询 TF 的等待时间。
-    transform_timeout: 0.5
-
-    # 继续使用全局投影坐标，而不是 local cartesian。
-    use_local_cartesian: false
-
-    # 航向来自滤波后的里程计链路，而不是直接取 navsat 节点自己的 IMU 观测。
-    # 这里与仿真侧保持一致，让姿态统一从 EKF 链路产生。
-    use_odometry_yaw: true
-
-    # 不等待手动 datum，启动时按首批可用数据自动建立全局锚点。
-    wait_for_datum: false
-
-    # 额外 yaw 修正。
     yaw_offset: 0.0
-
-    # 真机当前只做平面导航，高度直接压到 0。
     zero_altitude: true
+    publish_filtered_gps: false
+    use_odometry_yaw: true
+    wait_for_datum: false
+    use_local_cartesian: false
+    broadcast_cartesian_transform: true
+    broadcast_cartesian_transform_as_parent_frame: true
+    transform_timeout: 0.5
 
 local_ekf_node:
   ros__parameters:
-    # 本地层职责：
-    # - 吃 /gps/odom 这条局部运动源
-    # - 直接采用它自带的朝向
-    # - 输出给控制侧使用的 /odometry/local
     frequency: 15.0
     sensor_timeout: 0.5
     two_d_mode: true
@@ -58,18 +23,13 @@ local_ekf_node:
     predict_to_current_time: false
     print_diagnostics: true
 
-    map_frame: map
+    map_frame: odom
     odom_frame: odom
     base_link_frame: base_link
     world_frame: odom
     transform_timeout: 0.5
 
     odom0: /gps/odom
-
-    # /gps/odom 在这里同时承担局部位置、朝向和运动约束：
-    # - 保留平面位置 x/y，方便输出连续本地位姿给控制器
-    # - 接入 yaw，作为整条链路的朝向来源
-    # - 保留前向速度 vx；如果消息里自带稳定 vyaw，也一并接入
     odom0_config: [true,  true,  false,
                    false, false, true,
                    true,  false, false,
@@ -78,48 +38,3 @@ local_ekf_node:
     odom0_differential: false
     odom0_relative: false
     odom0_queue_size: 10
-
-global_ekf_node:
-  ros__parameters:
-    # 全局层职责：
-    # - 从 /odometry/local 继承短时连续运动与朝向
-    # - 用 /odometry/gps 提供 map 系下的绝对位置校正
-    # - 发布 map -> odom
-    frequency: 15.0
-    sensor_timeout: 0.5
-    two_d_mode: true
-    publish_tf: true
-    publish_acceleration: false
-    predict_to_current_time: false
-    print_diagnostics: true
-
-    map_frame: map
-    odom_frame: odom
-    base_link_frame: base_link
-    world_frame: map
-    transform_timeout: 0.5
-
-    odom0: /odometry/local
-
-    # 全局层不再吃本地层的位置，避免把局部平面位置再次当成全局真值。
-    # 这里只继承前向速度、朝向和偏航角速度，把绝对位置职责留给 /odometry/gps。
-    odom0_config: [false, false, false,
-                   false, false, true,
-                   true,  false, false,
-                   false, false, true,
-                   false, false, false]
-    odom0_differential: false
-    odom0_relative: false
-    odom0_queue_size: 10
-
-    odom1: /odometry/gps
-
-    # navsat_transform 输出的 map 系平面位置，作为全局层唯一的绝对位置来源。
-    odom1_config: [true,  true,  false,
-                   false, false, false,
-                   false, false, false,
-                   false, false, false,
-                   false, false, false]
-    odom1_differential: false
-    odom1_relative: false
-    odom1_queue_size: 10
