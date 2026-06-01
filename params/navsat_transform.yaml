@@ -1,6 +1,6 @@
 navsat_transform_node:
   ros__parameters:
-    frequency: 15.0
+    frequency: 20.0
     delay: 0.5
     magnetic_declination_radians: 0.0
     yaw_offset: 0.0
@@ -15,7 +15,7 @@ navsat_transform_node:
 
 local_ekf_node:
   ros__parameters:
-    frequency: 15.0
+    frequency: 20.0
     sensor_timeout: 0.5
     two_d_mode: true
     publish_tf: true
@@ -23,9 +23,13 @@ local_ekf_node:
     predict_to_current_time: false
     print_diagnostics: true
 
-    map_frame: odom
+    map_frame: map
     odom_frame: odom
+
     base_link_frame: base_link
+
+    # 工作模式: 1. world_frame = odom_frame; 2. world_frame = map_frame 全局坐标系
+    # 如果输出世界层是 map_frame，它不会直接发 map -> base_link 给 TF 树用，而是去查现有 odom -> base_link，再反推出 map -> odom
     world_frame: odom
     transform_timeout: 0.5
 
