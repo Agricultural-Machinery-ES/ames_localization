@@ -92,16 +92,6 @@ add_executable(
 )
 
 add_executable(
-  geo_map_anchor_node
-  src/geo_map_anchor_node.cpp
-)
-
-add_executable(
-  gps_map_projector_node
-  src/gps_map_projector_node.cpp
-)
-
-add_executable(
   robot_localization_listener_node
   src/robot_localization_listener_node.cpp
 )
@@ -158,36 +148,6 @@ target_link_libraries(
 ament_target_dependencies(
   navsat_transform_node
   rclcpp
-)
-
-target_link_libraries(
-  geo_map_anchor_node
-  ${GeographicLib_LIBRARIES}
-)
-
-ament_target_dependencies(
-  geo_map_anchor_node
-  geometry_msgs
-  rclcpp
-  sensor_msgs
-  tf2
-  tf2_ros
-)
-
-target_link_libraries(
-  gps_map_projector_node
-  ${GeographicLib_LIBRARIES}
-)
-
-ament_target_dependencies(
-  gps_map_projector_node
-  geometry_msgs
-  nav_msgs
-  rclcpp
-  sensor_msgs
-  tf2
-  tf2_geometry_msgs
-  tf2_ros
 )
 
 target_link_libraries(
@@ -368,8 +328,6 @@ endif()
 install(
   TARGETS
   navsat_transform_node
-  geo_map_anchor_node
-  gps_map_projector_node
   ekf_node
   ukf_node
   robot_localization_listener_node

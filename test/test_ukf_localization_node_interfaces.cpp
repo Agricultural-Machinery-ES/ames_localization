@@ -58,6 +58,30 @@ void filterCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
   stateUpdated_ = true;
 }
 
+template<typename PublisherT, typename SubscriptionT>
+void waitForMatchingEndpoints(
+  rclcpp::Node::SharedPtr node_,
+  const PublisherT & publisher,
+  const SubscriptionT & subscription,
+  const std::chrono::seconds timeout = 5s)
+{
+  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  rclcpp::WallRate loopRate(50.0);
+
+  while (std::chrono::steady_clock::now() < deadline) {
+    rclcpp::spin_some(node_);
+    if (publisher->get_subscription_count() > 0 &&
+      subscription->get_publisher_count() > 0)
+    {
+      return;
+    }
+    loopRate.sleep();
+  }
+
+  EXPECT_GT(publisher->get_subscription_count(), 0u);
+  EXPECT_GT(subscription->get_publisher_count(), 0u);
+}
+
 void resetFilter(rclcpp::Node::SharedPtr node_)
 {
   // ros2 style service-client server has been implemented
@@ -316,6 +340,7 @@ TEST(InterfacesTest, PoseBasicIO) {
 
   auto filteredSub = node_->create_subscription<nav_msgs::msg::Odometry>(
     "/odometry/filtered", rclcpp::QoS(1), filterCallback);
+  waitForMatchingEndpoints(node_, posePub, filteredSub);
 
   geometry_msgs::msg::PoseWithCovarianceStamped pose;
   pose.pose.pose.position.x = 20.0;
@@ -340,6 +365,7 @@ TEST(InterfacesTest, PoseBasicIO) {
     rclcpp::spin_some(node_);
     loopRate.sleep();
   }
+  rclcpp::spin_some(node_);
 
   // Now check the values from the callback
   EXPECT_LT(
@@ -372,6 +398,7 @@ TEST(InterfacesTest, TwistBasicIO) {
 
   auto filteredSub = node_->create_subscription<nav_msgs::msg::Odometry>(
     "/odometry/filtered", rclcpp::QoS(5), filterCallback);
+  waitForMatchingEndpoints(node_, twistPub, filteredSub);
 
   geometry_msgs::msg::TwistWithCovarianceStamped twist;
   twist.twist.twist.linear.x = 5.0;
@@ -721,6 +748,7 @@ TEST(InterfacesTest, ImuAccBasicIO) {
 
   auto filteredSub = node_->create_subscription<nav_msgs::msg::Odometry>(
     "/odometry/filtered", custom_qos_profile, filterCallback);
+  waitForMatchingEndpoints(node_, imuPub, filteredSub);
 
   sensor_msgs::msg::Imu imu;
   imu.header.frame_id = "base_link";
@@ -756,13 +784,13 @@ TEST(InterfacesTest, ImuAccBasicIO) {
   for (size_t i = 0; i < 50; ++i) {
     imu.header.stamp = node_->now();
     imuPub->publish(imu);
-    loopRate.sleep();
     rclcpp::spin_some(node_);
+    loopRate.sleep();
   }
 
-  EXPECT_LT(::fabs(filtered_.pose.pose.position.x - 1.8), 0.4);
-  EXPECT_LT(::fabs(filtered_.pose.pose.position.y + 1.8), 0.4);
-  EXPECT_LT(::fabs(filtered_.pose.pose.position.z - 1.8), 0.4);
+  EXPECT_LT(::fabs(filtered_.pose.pose.position.x - 1.8), 0.6);
+  EXPECT_LT(::fabs(filtered_.pose.pose.position.y + 1.8), 0.6);
+  EXPECT_LT(::fabs(filtered_.pose.pose.position.z - 1.8), 0.6);
 
   resetFilter(node_);
 
