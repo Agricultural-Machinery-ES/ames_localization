@@ -17,13 +17,12 @@ def generate_launch_description():
         remappings=[("odometry/filtered", "/odometry/local")],
     )
 
-    global_ekf_node = Node(
-        package="robot_localization",
-        executable="ekf_node",
-        name="global_ekf_node",
+    odom_to_map_static_tf_node = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="odom_to_map_static_tf_node",
         output="screen",
-        parameters=with_global_config([config_file]),
-        remappings=[("odometry/filtered", "/odometry/global")],
+        arguments=["0", "0", "0", "0", "0", "0", "odom", "map"],
     )
 
     navsat_transform_node = Node(
@@ -35,13 +34,13 @@ def generate_launch_description():
         remappings=[
             ("imu", "/imu/data"),
             ("gps/fix", "/gps/fix"),
-            ("odometry/filtered", "/odometry/global"),
+            ("odometry/filtered", "/odometry/local"),
             ("odometry/gps", "/odometry/gps"),
         ],
     )
 
     return LaunchDescription([
         local_ekf_node,
-        global_ekf_node,
+        odom_to_map_static_tf_node,
         navsat_transform_node,
     ])

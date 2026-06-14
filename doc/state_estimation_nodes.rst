@@ -242,18 +242,6 @@ If any of your sensors produce data with timestamps that are older than the most
 ^^^^^^^^^^^^^^^
 If ``smooth_lagged_data`` is set to *true*, this parameter specifies the number of seconds for which the filter will retain its state and measurement history. This value should be at least as large as the time delta between your lagged measurements and the current time.
 
-~[sensor]_nodelay
-^^^^^^^^^^^^^^^^^
-
-Specific parameters:
-
-* ``~odomN_nodelay``
-* ``~twistN_nodelay``
-* ``~imuN_nodelay``
-* ``~poseN_nodelay``
-
-If *true*, sets the `tcpNoDelay` `transport hint <http://docs.ros.org/api/roscpp/html/classros_1_1TransportHints.html#a03191a9987162fca0ae2c81fa79fcde9>`_. There is some evidence that Nagle's algorithm intereferes with the timely reception of large message types, such as the `nav_msgs/Odometry <http://docs.ros.org/api/nav_msgs/html/msg/Odometry.html>`_ message. Setting this to *true* for an input disables Nagle's algorithm for that subscriber. Defaults to *false*.
-
 ~[sensor]_threshold
 ^^^^^^^^^^^^^^^^^^^
 Specific parameters:
